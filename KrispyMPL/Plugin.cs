@@ -5,6 +5,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using KSP.UI.Screens;
 using UnityEngine;
 
 namespace KrispyMPL
@@ -15,7 +16,7 @@ namespace KrispyMPL
         private const float UPDATE_INTERVAL = 0.5f;
         private const string CONFIG_PATH = "GameData/KrispyMPL/config.txt";
 
-        private Rect _windowRect = new Rect(20, 20, 320, 200);
+        private Rect _windowRect = new Rect(20, 20, 320, 230);
         private MultiplayerClient _client;
         private ConcurrentQueue<string> _incomingMessages = new ConcurrentQueue<string>();
         private volatile bool _connected;
@@ -24,6 +25,8 @@ namespace KrispyMPL
         private string _serverHost = "localhost";
         private string _serverPort = "8080";
         private string _statusMessage;
+        private bool _showConfig;
+        private ApplicationLauncherButton _appButton;
         private Dictionary<string, RemotePlayer> _remotePlayers = new Dictionary<string, RemotePlayer>();
         private class RemotePlayer
         {
@@ -38,12 +41,42 @@ namespace KrispyMPL
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
+            GameEvents.onGUIApplicationLauncherReady.Add(RegisterToolbarButton);
+            GameEvents.onGUIApplicationLauncherDestroyed.Add(RemoveToolbarButton);
         }
 
         public void OnDestroy()
         {
+            GameEvents.onGUIApplicationLauncherDestroyed.Remove(RemoveToolbarButton);
+            GameEvents.onGUIApplicationLauncherReady.Remove(RegisterToolbarButton);
             GameEvents.onGameSceneLoadRequested.Remove(OnSceneChange);
+            RemoveToolbarButton();
             Disconnect();
+        }
+
+        private void RegisterToolbarButton()
+        {
+            if (ApplicationLauncher.Instance == null) return;
+            var tex = MakeIconTexture();
+            _appButton = ApplicationLauncher.Instance.AddModApplication(
+                () => { _showConfig = true; },
+                () => { _showConfig = false; },
+                null, null, null, null,
+                ApplicationLauncher.AppScenes.SPACECENTER |
+                ApplicationLauncher.AppScenes.FLIGHT |
+                ApplicationLauncher.AppScenes.TRACKSTATION |
+                ApplicationLauncher.AppScenes.SPH |
+                ApplicationLauncher.AppScenes.VAB,
+                tex
+            );
+        }
+
+        private void RemoveToolbarButton()
+        {
+            if (ApplicationLauncher.Instance != null && _appButton != null)
+                ApplicationLauncher.Instance.RemoveModApplication(_appButton);
+            _appButton = null;
+            _showConfig = false;
         }
 
         private void OnSceneChange(GameScenes scene)
@@ -183,9 +216,9 @@ namespace KrispyMPL
 
         public void OnGUI()
         {
-            if (!WindowVisible()) return;
+            if (!WindowVisible() || !_showConfig) return;
             GUI.skin = HighLogic.Skin;
-            _windowRect = GUILayout.Window(424242, _windowRect, DrawWindow, "Kerbal Multiplayer");
+            _windowRect = GUILayout.Window(424242, _windowRect, DrawWindow, "Krispy Multiplayer");
         }
 
         private void DrawWindow(int windowId)
@@ -216,6 +249,8 @@ namespace KrispyMPL
                 if (_connected) Disconnect();
                 else ConnectToServer();
             }
+            if (GUILayout.Button("Close"))
+                _showConfig = false;
             GUILayout.EndHorizontal();
 
             foreach (var kvp in _remotePlayers)
@@ -228,6 +263,26 @@ namespace KrispyMPL
         }
 
         #region Config Persistence
+
+        private static Texture2D MakeIconTexture()
+        {
+            var tex = new Texture2D(38, 38, TextureFormat.ARGB32, false);
+            Color green = new Color(0.2f, 0.8f, 0.2f, 1f);
+            Color dark = new Color(0.1f, 0.4f, 0.1f, 1f);
+            for (int y = 0; y < 38; y++)
+            {
+                for (int x = 0; x < 38; x++)
+                {
+                    int cx = x - 19;
+                    int cy = y - 19;
+                    float r = (float)System.Math.Sqrt(cx * cx + cy * cy);
+                    tex.SetPixel(x, y, (r < 18 && r > 13) || (cx > -4 && cx < 4) || (cy > -4 && cy < 4)
+                        ? green : dark);
+                }
+            }
+            tex.Apply();
+            return tex;
+        }
 
         private void LoadConfig()
         {
