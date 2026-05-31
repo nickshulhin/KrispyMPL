@@ -24,6 +24,8 @@ namespace KrispyMPL
         private string _serverHost = "localhost";
         private string _serverPort = "8080";
         private string _serverPassword = "";
+        private string _roomId = "";
+        private int _roomCount;
         private string _statusMessage;
         private bool _showConfig;
         private Texture2D _buttonIcon;
@@ -106,6 +108,8 @@ namespace KrispyMPL
             }
             _connected = false;
             _statusMessage = "Disconnected";
+            _roomId = "";
+            _roomCount = 0;
             _remotePlayers.Clear();
         }
 
@@ -134,7 +138,9 @@ namespace KrispyMPL
                     switch (type)
                     {
                         case "joined":
-                            Debug.Log($"[KrispyMPL] Server confirmed join, players: {GetString(dict, "players")?.Length ?? 0}");
+                            _roomId = GetString(dict, "roomId") ?? "";
+                            _roomCount = GetInt(dict, "roomCount");
+                            Debug.Log($"[KrispyMPL] Joined room {_roomId}, {_roomCount} rooms total");
                             break;
 
                         case "player_update":
@@ -225,6 +231,8 @@ namespace KrispyMPL
 
             GUILayout.Label($"Status: {status}");
             GUILayout.Label($"Name: {_playerName}");
+            if (_connected)
+                GUILayout.Label($"Room: {_roomId}  |  Active rooms: {_roomCount}");
 
             if (!_connected)
             {
@@ -484,6 +492,13 @@ namespace KrispyMPL
             if (dict.TryGetValue(key, out var val) && val is List<object> list)
                 return list;
             return null;
+        }
+
+        private static int GetInt(Dictionary<string, object> dict, string key)
+        {
+            if (dict.TryGetValue(key, out var val) && val is double d)
+                return (int)d;
+            return 0;
         }
 
         private static float GetFloat(Dictionary<string, object> dict, string key)
