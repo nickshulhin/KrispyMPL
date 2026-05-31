@@ -23,6 +23,7 @@ namespace KrispyMPL
         private string _playerName;
         private string _serverHost = "localhost";
         private string _serverPort = "8080";
+        private string _serverPassword = "";
         private string _statusMessage;
         private bool _showConfig;
         private Texture2D _buttonIcon;
@@ -42,7 +43,7 @@ namespace KrispyMPL
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
-            _buttonIcon = MakeIconTexture();
+            _buttonIcon = GameDatabase.Instance.GetTexture("KrispyMPL/assets/nick", false);
         }
 
         public void OnDestroy()
@@ -84,7 +85,7 @@ namespace KrispyMPL
                 _client.Connect(_serverHost, port);
                 _connected = true;
                 _statusMessage = "Connected";
-                _client.Send($"{{\"type\":\"join\",\"name\":\"{_playerName}\"}}");
+                _client.Send($"{{\"type\":\"join\",\"name\":\"{_playerName}\",\"password\":\"{_serverPassword}\"}}");
                 SaveConfig();
                 Debug.Log($"[KrispyMPL] Connected to {_serverHost}:{port} as {_playerName}");
             }
@@ -167,6 +168,11 @@ namespace KrispyMPL
                                 Debug.Log($"[KrispyMPL] Player left: {leftName}");
                             }
                             break;
+
+                        case "auth_error":
+                            _statusMessage = "Auth error: " + (GetString(dict, "name") ?? "Unknown");
+                            Disconnect();
+                            break;
                     }
                 }
                 catch (Exception ex)
@@ -228,6 +234,10 @@ namespace KrispyMPL
                 GUILayout.Label("Port:", GUILayout.Width(35));
                 _serverPort = GUILayout.TextField(_serverPort, GUILayout.Width(60));
                 GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Pass:", GUILayout.Width(40));
+                _serverPassword = GUILayout.PasswordField(_serverPassword, '*', GUILayout.Width(190));
+                GUILayout.EndHorizontal();
             }
 
             if (!string.IsNullOrEmpty(_statusMessage) && !_connected)
@@ -285,26 +295,6 @@ namespace KrispyMPL
 
         #region Config Persistence
 
-        private static Texture2D MakeIconTexture()
-        {
-            var tex = new Texture2D(38, 38, TextureFormat.ARGB32, false);
-            Color green = new Color(0.2f, 0.8f, 0.2f, 1f);
-            Color dark = new Color(0.1f, 0.4f, 0.1f, 1f);
-            for (int y = 0; y < 38; y++)
-            {
-                for (int x = 0; x < 38; x++)
-                {
-                    int cx = x - 19;
-                    int cy = y - 19;
-                    float r = (float)System.Math.Sqrt(cx * cx + cy * cy);
-                    tex.SetPixel(x, y, (r < 18 && r > 13) || (cx > -4 && cx < 4) || (cy > -4 && cy < 4)
-                        ? green : dark);
-                }
-            }
-            tex.Apply();
-            return tex;
-        }
-
         private void LoadConfig()
         {
             try
@@ -322,6 +312,7 @@ namespace KrispyMPL
                             string val = line.Substring(eq + 1).Trim();
                             if (key == "host") _serverHost = val;
                             else if (key == "port") _serverPort = val;
+                            else if (key == "password") _serverPassword = val;
                             else if (key == "name") _playerName = val;
                         }
                     }
@@ -343,7 +334,7 @@ namespace KrispyMPL
                 if (!System.IO.Directory.Exists(dir))
                     System.IO.Directory.CreateDirectory(dir);
                 System.IO.File.WriteAllText(fullPath,
-                    $"host={_serverHost}\nport={_serverPort}\nname={_playerName}\n");
+                    $"host={_serverHost}\nport={_serverPort}\npassword={_serverPassword}\nname={_playerName}\n");
             }
             catch (Exception ex)
             {

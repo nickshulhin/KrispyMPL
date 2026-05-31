@@ -17,12 +17,13 @@ import java.util.concurrent.ConcurrentHashMap
 data class PlayerPosition(val name: String, val x: Double, val y: Double, val z: Double, val body: String)
 
 @Serializable
-data class ClientMessage(val type: String, val name: String = "", val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0, val body: String = "Kerbin")
+data class ClientMessage(val type: String, val name: String = "", val password: String = "", val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0, val body: String = "Kerbin")
 
 @Serializable
 data class ServerMessage(val type: String, val players: List<PlayerPosition> = emptyList(), val name: String = "")
 
 private val log = LoggerFactory.getLogger("KrispyMPLServer")
+private val serverPassword = System.getenv("KMPL_PASSWORD") ?: ""
 
 fun Application.configurePlugin() {
     install(WebSockets)
@@ -47,6 +48,12 @@ fun Application.configurePlugin() {
 
                         when (msg.type) {
                             "join" -> {
+                                if (serverPassword.isNotEmpty() && msg.password != serverPassword) {
+                                    send(Frame.Text(json.encodeToString(ServerMessage("auth_error", name = "Wrong password"))))
+                                    log.info("Player rejected (wrong password): ${msg.name}")
+                                    close()
+                                    return@webSocket
+                                }
                                 playerName = msg.name
                                 sessions[playerName] = this
                                 players[playerName] = PlayerPosition(playerName, 0.0, 0.0, 0.0, "Kerbin")
