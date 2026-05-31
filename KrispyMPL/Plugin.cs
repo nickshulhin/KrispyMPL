@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace KrispyMPL
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, true)]
+    [KSPAddon(KSPAddon.Startup.AllGameScenes, true)]
     public class KerbalMultiplayerPlugin : MonoBehaviour
     {
         private const float UPDATE_INTERVAL = 0.5f;
@@ -38,7 +38,7 @@ namespace KrispyMPL
 
         public void Awake()
         {
-            Debug.Log("[KrispyMPL] Awake");
+            Debug.Log("[KrispyMPL] Awake — scene=" + HighLogic.LoadedScene + " launcher=" + (ApplicationLauncher.Instance != null));
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
@@ -48,6 +48,7 @@ namespace KrispyMPL
 
         public void OnDestroy()
         {
+            Debug.Log("[KrispyMPL] OnDestroy");
             GameEvents.onGUIApplicationLauncherDestroyed.Remove(OnLauncherDestroyed);
             GameEvents.onGUIApplicationLauncherReady.Remove(RegisterToolbarButton);
             GameEvents.onGameSceneLoadRequested.Remove(OnSceneChange);
@@ -57,11 +58,13 @@ namespace KrispyMPL
 
         private void OnLauncherDestroyed()
         {
+            Debug.Log("[KrispyMPL] OnLauncherDestroyed");
             _appButton = null;
         }
 
         private void OnSceneChange(GameScenes scene)
         {
+            Debug.Log($"[KrispyMPL] OnSceneChange to {scene}");
             _showConfig = false;
             if (scene == GameScenes.MAINMENU || scene == GameScenes.SETTINGS || scene == GameScenes.CREDITS)
                 Disconnect();
@@ -69,8 +72,9 @@ namespace KrispyMPL
 
         private void RegisterToolbarButton()
         {
-            if (ApplicationLauncher.Instance == null) return;
-            if (_appButton != null) return;
+            if (ApplicationLauncher.Instance == null) { Debug.Log("[KrispyMPL] RegisterToolbarButton: launcher null"); return; }
+            if (_appButton != null) { Debug.Log("[KrispyMPL] RegisterToolbarButton: already exists"); return; }
+            Debug.Log("[KrispyMPL] RegisterToolbarButton: CREATING");
             var tex = MakeIconTexture();
             _appButton = ApplicationLauncher.Instance.AddModApplication(
                 () => _showConfig = true,
@@ -83,6 +87,7 @@ namespace KrispyMPL
                 ApplicationLauncher.AppScenes.VAB,
                 tex
             );
+            Debug.Log($"[KrispyMPL] RegisterToolbarButton: done, success={_appButton != null}");
         }
 
         private void RemoveToolbarButton()
