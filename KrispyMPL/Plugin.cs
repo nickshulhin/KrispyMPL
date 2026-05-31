@@ -5,7 +5,6 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using KSP.UI.Screens;
 using UnityEngine;
 
 namespace KrispyMPL
@@ -26,7 +25,7 @@ namespace KrispyMPL
         private string _serverPort = "8080";
         private string _statusMessage;
         private bool _showConfig;
-        private ApplicationLauncherButton _appButton;
+        private Texture2D _buttonIcon;
         private Dictionary<string, RemotePlayer> _remotePlayers = new Dictionary<string, RemotePlayer>();
 
         private class RemotePlayer
@@ -38,66 +37,24 @@ namespace KrispyMPL
 
         public void Awake()
         {
-            Debug.Log("[KrispyMPL] Awake — scene=" + HighLogic.LoadedScene + " launcher=" + (ApplicationLauncher.Instance != null));
+            Debug.Log("[KrispyMPL] Awake");
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
-            GameEvents.onGUIApplicationLauncherReady.Add(RegisterToolbarButton);
-            GameEvents.onGUIApplicationLauncherDestroyed.Add(OnLauncherDestroyed);
+            _buttonIcon = GameDatabase.Instance.GetTexture("KrispyMPL/assets/nick", false);
         }
 
         public void OnDestroy()
         {
-            Debug.Log("[KrispyMPL] OnDestroy");
-            GameEvents.onGUIApplicationLauncherDestroyed.Remove(OnLauncherDestroyed);
-            GameEvents.onGUIApplicationLauncherReady.Remove(RegisterToolbarButton);
             GameEvents.onGameSceneLoadRequested.Remove(OnSceneChange);
-            RemoveToolbarButton();
             Disconnect();
-        }
-
-        private void OnLauncherDestroyed()
-        {
-            Debug.Log("[KrispyMPL] OnLauncherDestroyed");
-            _appButton = null;
         }
 
         private void OnSceneChange(GameScenes scene)
         {
-            Debug.Log($"[KrispyMPL] OnSceneChange to {scene}");
             _showConfig = false;
             if (scene == GameScenes.MAINMENU || scene == GameScenes.SETTINGS || scene == GameScenes.CREDITS)
                 Disconnect();
-        }
-
-        private void RegisterToolbarButton()
-        {
-            if (ApplicationLauncher.Instance == null) { Debug.Log("[KrispyMPL] RegisterToolbarButton: launcher null"); return; }
-            if (_appButton != null) { Debug.Log("[KrispyMPL] RegisterToolbarButton: already exists"); return; }
-            Debug.Log("[KrispyMPL] RegisterToolbarButton: CREATING");
-            var tex = MakeIconTexture();
-            _appButton = ApplicationLauncher.Instance.AddModApplication(
-                () => _showConfig = true,
-                () => _showConfig = false,
-                null, null, null, null,
-                ApplicationLauncher.AppScenes.SPACECENTER |
-                ApplicationLauncher.AppScenes.FLIGHT |
-                ApplicationLauncher.AppScenes.TRACKSTATION |
-                ApplicationLauncher.AppScenes.SPH |
-                ApplicationLauncher.AppScenes.VAB,
-                tex
-            );
-            Debug.Log($"[KrispyMPL] RegisterToolbarButton: done, success={_appButton != null}");
-        }
-
-        private void RemoveToolbarButton()
-        {
-            if (ApplicationLauncher.Instance != null && _appButton != null)
-            {
-                ApplicationLauncher.Instance.RemoveModApplication(_appButton);
-                _appButton = null;
-                _showConfig = false;
-            }
         }
 
         private bool WindowVisible()
@@ -231,8 +188,26 @@ namespace KrispyMPL
 
         public void OnGUI()
         {
-            if (!WindowVisible() || !_showConfig) return;
+            if (!WindowVisible()) return;
             GUI.skin = HighLogic.Skin;
+
+            if (!_showConfig)
+            {
+                float size = 38f;
+                Rect btnRect = new Rect(Screen.width - size - 10, Screen.height - size - 100, size, size);
+                if (_buttonIcon != null)
+                {
+                    if (GUI.Button(btnRect, _buttonIcon))
+                        _showConfig = true;
+                }
+                else
+                {
+                    if (GUI.Button(btnRect, "MPL"))
+                        _showConfig = true;
+                }
+                return;
+            }
+
             _windowRect = GUILayout.Window(424242, _windowRect, DrawWindow, "Krispy Multiplayer");
         }
 
@@ -304,29 +279,6 @@ namespace KrispyMPL
 
             GL.End();
             GL.PopMatrix();
-        }
-
-        private static Texture2D MakeIconTexture()
-        {
-            var tex = GameDatabase.Instance.GetTexture("KrispyMPL/assets/nick", false);
-            if (tex != null) return tex;
-
-            tex = new Texture2D(38, 38, TextureFormat.ARGB32, false);
-            Color green = new Color(0.2f, 0.8f, 0.2f, 1f);
-            Color dark = new Color(0.1f, 0.4f, 0.1f, 1f);
-            for (int y = 0; y < 38; y++)
-            {
-                for (int x = 0; x < 38; x++)
-                {
-                    int cx = x - 19;
-                    int cy = y - 19;
-                    float r = (float)System.Math.Sqrt(cx * cx + cy * cy);
-                    tex.SetPixel(x, y, (r < 18 && r > 13) || (cx > -4 && cx < 4) || (cy > -4 && cy < 4)
-                        ? green : dark);
-                }
-            }
-            tex.Apply();
-            return tex;
         }
 
         #region Config Persistence
