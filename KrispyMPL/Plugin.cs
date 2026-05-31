@@ -37,6 +37,7 @@ namespace KrispyMPL
 
         public void Awake()
         {
+            DontDestroyOnLoad(this);
             Debug.Log("[KrispyMPL] Awake");
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
@@ -190,7 +191,7 @@ namespace KrispyMPL
         {
             GUI.skin = HighLogic.Skin;
 
-            if (!_showConfig)
+            if (!_showConfig && WindowVisible())
             {
                 float size = 38f;
                 Rect btnRect = new Rect(Screen.width - size - 10, Screen.height - size - 100, size, size);
@@ -206,7 +207,7 @@ namespace KrispyMPL
                 }
             }
 
-            if (_showConfig)
+            if (_showConfig && WindowVisible())
             {
                 _windowRect = GUILayout.Window(424242, _windowRect, DrawWindow, "Krispy Multiplayer");
             }
