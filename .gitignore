@@ -1,0 +1,24 @@
+# Build output
+bin/
+obj/
+build/
+.gradle/
+
+# IDE
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gradle
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# KSP plugin output
+KerbalMultiplayer/bin/
+KerbalMultiplayer/obj/
