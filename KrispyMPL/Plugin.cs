@@ -2,7 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -24,6 +26,7 @@ namespace KrispyMPL
         private string _serverHost = "localhost";
         private string _serverPort = "8080";
         private string _serverPassword = "";
+        private bool _useTls;
         private string _roomId = "";
         private int _roomCount;
         private string _statusMessage;
@@ -95,7 +98,7 @@ namespace KrispyMPL
 
             try
             {
-                _client.Connect(_serverHost, port);
+                _client.Connect(_serverHost, port, _useTls);
                 _connected = true;
                 _statusMessage = "Connected";
                 _client.Send($"{{\"type\":\"join\",\"name\":\"{_playerName}\",\"password\":\"{_serverPassword}\"}}");
@@ -250,6 +253,7 @@ namespace KrispyMPL
                 GUILayout.Label("Pass:", GUILayout.Width(40));
                 _serverPassword = GUILayout.PasswordField(_serverPassword, '*', GUILayout.Width(190));
                 GUILayout.EndHorizontal();
+                _useTls = GUILayout.Toggle(_useTls, " Use WSS (secure)");
             }
 
             if (!string.IsNullOrEmpty(_statusMessage) && !_connected)
@@ -332,6 +336,7 @@ namespace KrispyMPL
                             if (key == "host") _serverHost = val;
                             else if (key == "port") _serverPort = val;
                             else if (key == "password") _serverPassword = val;
+                            else if (key == "tls") _useTls = val == "true";
                             else if (key == "name") _playerName = val;
                         }
                     }
@@ -353,7 +358,7 @@ namespace KrispyMPL
                 if (!System.IO.Directory.Exists(dir))
                     System.IO.Directory.CreateDirectory(dir);
                 System.IO.File.WriteAllText(fullPath,
-                    $"host={_serverHost}\nport={_serverPort}\npassword={_serverPassword}\nname={_playerName}\n");
+                    $"host={_serverHost}\nport={_serverPort}\npassword={_serverPassword}\ntls={_useTls}\nname={_playerName}\n");
             }
             catch (Exception ex)
             {
@@ -521,17 +526,24 @@ namespace KrispyMPL
         public event Action OnDisconnected;
 
         private TcpClient _tcp;
-        private NetworkStream _stream;
+        private Stream _stream;
         private Thread _readThread;
         private volatile bool _running;
         private readonly object _sendLock = new object();
         private string _wsKey;
 
-        public void Connect(string host, int port)
+        public void Connect(string host, int port, bool useTls = false)
         {
             _tcp = new TcpClient();
             _tcp.Connect(host, port);
             _stream = _tcp.GetStream();
+
+            if (useTls)
+            {
+                var ssl = new SslStream(_stream, false);
+                ssl.AuthenticateAsClient(host);
+                _stream = ssl;
+            }
 
             _wsKey = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             string upgrade = $"GET /ws HTTP/1.1\r\n" +
@@ -570,6 +582,7 @@ namespace KrispyMPL
         public void Close()
         {
             _running = false;
+            try { _stream?.Close(); } catch { }
             try { _tcp?.Close(); } catch { }
             _readThread = null;
             _stream = null;
@@ -630,7 +643,7 @@ namespace KrispyMPL
             }
         }
 
-        private static void SendFrame(byte[] data, NetworkStream stream)
+        private static void SendFrame(byte[] data, Stream stream)
         {
             byte[] frame;
             int idx = 0;
