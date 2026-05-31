@@ -41,16 +41,12 @@ namespace KrispyMPL
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
-            GameEvents.onGUIApplicationLauncherReady.Add(RegisterToolbarButton);
-            GameEvents.onGUIApplicationLauncherDestroyed.Add(RemoveToolbarButton);
             GameEvents.onLevelWasLoadedGUIReady.Add(OnLevelLoaded);
         }
 
         public void OnDestroy()
         {
             GameEvents.onLevelWasLoadedGUIReady.Remove(OnLevelLoaded);
-            GameEvents.onGUIApplicationLauncherDestroyed.Remove(RemoveToolbarButton);
-            GameEvents.onGUIApplicationLauncherReady.Remove(RegisterToolbarButton);
             GameEvents.onGameSceneLoadRequested.Remove(OnSceneChange);
             RemoveToolbarButton();
             Disconnect();
@@ -58,8 +54,21 @@ namespace KrispyMPL
 
         private void OnLevelLoaded(GameScenes scene)
         {
-            if (WindowVisible() && _appButton == null)
-                RegisterToolbarButton();
+            if (!WindowVisible()) return;
+            StartCoroutine(DelayedRegister());
+        }
+
+        private System.Collections.IEnumerator DelayedRegister()
+        {
+            for (int i = 0; i < 30; i++)
+            {
+                if (ApplicationLauncher.Instance != null)
+                {
+                    RegisterToolbarButton();
+                    yield break;
+                }
+                yield return null;
+            }
         }
 
         private void RegisterToolbarButton()
@@ -83,9 +92,11 @@ namespace KrispyMPL
         private void RemoveToolbarButton()
         {
             if (ApplicationLauncher.Instance != null && _appButton != null)
+            {
                 ApplicationLauncher.Instance.RemoveModApplication(_appButton);
-            _appButton = null;
-            _showConfig = false;
+                _appButton = null;
+                _showConfig = false;
+            }
         }
 
         private void OnSceneChange(GameScenes scene)
