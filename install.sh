@@ -14,7 +14,6 @@ rm -rf "$KSP_GAMEDATA"
 mkdir -p "$KSP_GAMEDATA"
 cp "$SCRIPT_DIR/$MOD_NAME/bin/Release/net472/$MOD_NAME.dll" "$KSP_GAMEDATA/"
 cp "$SCRIPT_DIR/GameData/$MOD_NAME/$MOD_NAME.version"         "$KSP_GAMEDATA/"
-cp -r "$SCRIPT_DIR/$MOD_NAME/assets"                         "$KSP_GAMEDATA/" 2>/dev/null || true
 
 echo "==> Installed:"
 ls -lh "$KSP_GAMEDATA/"

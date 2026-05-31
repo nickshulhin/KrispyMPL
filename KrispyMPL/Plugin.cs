@@ -28,7 +28,6 @@ namespace KrispyMPL
         private int _roomCount;
         private string _statusMessage;
         private bool _showConfig;
-        private Texture2D _buttonIcon;
         private Dictionary<string, RemotePlayer> _remotePlayers = new Dictionary<string, RemotePlayer>();
 
         private class RemotePlayer
@@ -45,7 +44,6 @@ namespace KrispyMPL
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
-            _buttonIcon = GameDatabase.Instance.GetTexture("KrispyMPL/assets/nick", false);
         }
 
         public void OnDestroy()
@@ -205,18 +203,11 @@ namespace KrispyMPL
 
             if (!_showConfig && WindowVisible())
             {
-                float size = 38f;
-                Rect btnRect = new Rect(Screen.width - size - 10, Screen.height - size - 100, size, size);
-                if (_buttonIcon != null)
-                {
-                    if (GUI.Button(btnRect, _buttonIcon))
-                        _showConfig = true;
-                }
-                else
-                {
-                    if (GUI.Button(btnRect, "MPL"))
-                        _showConfig = true;
-                }
+                float btnWidth = 90f;
+                float btnHeight = 30f;
+                Rect btnRect = new Rect(Screen.width - btnWidth - 10, Screen.height - btnHeight - 100, btnWidth, btnHeight);
+                if (GUI.Button(btnRect, "KrispyMPL"))
+                    _showConfig = true;
             }
 
             if (_showConfig && WindowVisible())
