@@ -28,11 +28,6 @@
         }
     ],
     "download": "https://github.com/nickshulhin/KrispyMPL/releases/download/alpha/KrispyMPL-0.1.0.0.zip",
-    "download_size": 50000,
-    "download_hash": {
-        "sha1": "0000000000000000000000000000000000000000",
-        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
-    },
     "download_content_type": "application/zip",
     "release_date": "2026-05-31T00:00:00Z",
     "x_generated_by": "netkan"
