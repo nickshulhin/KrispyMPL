@@ -43,6 +43,7 @@ mkdir -p "$GAMEDATA_DIR"
 
 cp "$DLL"                                                 "$GAMEDATA_DIR/"
 cp "$SCRIPT_DIR/GameData/$MOD_NAME/$MOD_NAME.version"      "$GAMEDATA_DIR/"
+cp -r "$SCRIPT_DIR/$MOD_NAME/assets"                       "$GAMEDATA_DIR/" 2>/dev/null || true
 
 # ---------------------------------------------------------------------
 # Step 3: Create dist directory and zip

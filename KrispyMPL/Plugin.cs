@@ -275,7 +275,10 @@ namespace KrispyMPL
 
         private static Texture2D MakeIconTexture()
         {
-            var tex = new Texture2D(38, 38, TextureFormat.ARGB32, false);
+            var tex = GameDatabase.Instance.GetTexture("KrispyMPL/assets/nick", false);
+            if (tex != null) return tex;
+
+            tex = new Texture2D(38, 38, TextureFormat.ARGB32, false);
             Color green = new Color(0.2f, 0.8f, 0.2f, 1f);
             Color dark = new Color(0.1f, 0.4f, 0.1f, 1f);
             for (int y = 0; y < 38; y++)
