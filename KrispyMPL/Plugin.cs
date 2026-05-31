@@ -26,6 +26,7 @@ namespace KrispyMPL
         private string _serverPort = "8080";
         private string _statusMessage;
         private bool _showConfig;
+        private bool _needsButton;
         private ApplicationLauncherButton _appButton;
         private Dictionary<string, RemotePlayer> _remotePlayers = new Dictionary<string, RemotePlayer>();
         private class RemotePlayer
@@ -43,12 +44,14 @@ namespace KrispyMPL
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
             GameEvents.onGUIApplicationLauncherReady.Add(RegisterToolbarButton);
             GameEvents.onGUIApplicationLauncherDestroyed.Add(OnLauncherDestroyed);
+            GameEvents.onLevelWasLoadedGUIReady.Add(OnLevelLoaded);
             if (ApplicationLauncher.Instance != null)
                 RegisterToolbarButton();
         }
 
         public void OnDestroy()
         {
+            GameEvents.onLevelWasLoadedGUIReady.Remove(OnLevelLoaded);
             GameEvents.onGUIApplicationLauncherDestroyed.Remove(OnLauncherDestroyed);
             GameEvents.onGUIApplicationLauncherReady.Remove(RegisterToolbarButton);
             GameEvents.onGameSceneLoadRequested.Remove(OnSceneChange);
@@ -59,11 +62,19 @@ namespace KrispyMPL
         private void OnLauncherDestroyed()
         {
             _appButton = null;
-            _showConfig = false;
+            if (WindowVisible())
+                _needsButton = true;
+        }
+
+        private void OnLevelLoaded(GameScenes scene)
+        {
+            if (WindowVisible() && _appButton == null)
+                _needsButton = true;
         }
 
         private void OnSceneChange(GameScenes scene)
         {
+            _appButton = null;
             if (scene == GameScenes.MAINMENU || scene == GameScenes.SETTINGS || scene == GameScenes.CREDITS)
             {
                 _showConfig = false;
@@ -157,6 +168,12 @@ namespace KrispyMPL
         public void Update()
         {
             ProcessMessages();
+
+            if (_needsButton && WindowVisible() && ApplicationLauncher.Instance != null)
+            {
+                _needsButton = false;
+                RegisterToolbarButton();
+            }
 
             if (!WindowVisible()) return;
 
