@@ -160,9 +160,17 @@ namespace KrispyMPL
             _remotePlayers.Clear();
         }
 
+        private float _nextDebugLog;
+
         public void Update()
         {
             ProcessMessages();
+
+            if (Time.time > _nextDebugLog)
+            {
+                _nextDebugLog = Time.time + 2f;
+                Debug.Log($"[KrispyMPL] Update tick — scene={HighLogic.LoadedScene}, launcher={ApplicationLauncher.Instance != null}, _appButton={_appButton != null}, visible={WindowVisible()}");
+            }
 
             if (_appButton == null && WindowVisible() && ApplicationLauncher.Instance != null)
             {
