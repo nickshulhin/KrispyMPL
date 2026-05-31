@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace KerbalMultiplayer
 {
-    [KSPAddon(KSPAddon.Startup.Instantly, true)]
+    [KSPAddon(KSPAddon.Startup.SpaceCentre, true)]
     public class KerbalMultiplayerPlugin : MonoBehaviour
     {
         private const float UPDATE_INTERVAL = 0.5f;
@@ -25,7 +25,6 @@ namespace KerbalMultiplayer
         private string _serverPort = "8080";
         private string _statusMessage;
         private Dictionary<string, RemotePlayer> _remotePlayers = new Dictionary<string, RemotePlayer>();
-
         private class RemotePlayer
         {
             public string Name;
@@ -38,11 +37,28 @@ namespace KerbalMultiplayer
             Debug.Log("[KMP] Awake");
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
+            GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
         }
 
         public void OnDestroy()
         {
+            GameEvents.onGameSceneLoadRequested.Remove(OnSceneChange);
             Disconnect();
+        }
+
+        private void OnSceneChange(GameScenes scene)
+        {
+            if (scene == GameScenes.MAINMENU || scene == GameScenes.SETTINGS || scene == GameScenes.CREDITS)
+                Disconnect();
+        }
+
+        private bool WindowVisible()
+        {
+            var scene = HighLogic.LoadedScene;
+            return scene == GameScenes.SPACECENTER ||
+                   scene == GameScenes.FLIGHT ||
+                   scene == GameScenes.TRACKSTATION ||
+                   scene == GameScenes.EDITOR;
         }
 
         private void ConnectToServer()
@@ -89,7 +105,11 @@ namespace KerbalMultiplayer
         public void Update()
         {
             ProcessMessages();
-            if (_connected && Time.time - _lastPositionUpdate > UPDATE_INTERVAL)
+
+            if (!WindowVisible()) return;
+
+            if (_connected && HighLogic.LoadedScene == GameScenes.FLIGHT &&
+                Time.time - _lastPositionUpdate > UPDATE_INTERVAL)
                 SendPosition();
         }
 
@@ -163,6 +183,7 @@ namespace KerbalMultiplayer
 
         public void OnGUI()
         {
+            if (!WindowVisible()) return;
             GUI.skin = HighLogic.Skin;
             _windowRect = GUILayout.Window(424242, _windowRect, DrawWindow, "Kerbal Multiplayer");
         }
@@ -258,7 +279,7 @@ namespace KerbalMultiplayer
 
         public void OnRenderObject()
         {
-            if (_remotePlayers.Count == 0) return;
+            if (!WindowVisible() || _remotePlayers.Count == 0) return;
 
             foreach (var kvp in _remotePlayers)
             {
