@@ -24,21 +24,34 @@ data class ServerMessage(val type: String, val players: List<PlayerPosition> = e
 
 private val log = LoggerFactory.getLogger("KrispyMPLServer")
 
+class Room(val password: String) {
+    val sessions = ConcurrentHashMap<String, WebSocketSession>()
+    val players = ConcurrentHashMap<String, PlayerPosition>()
+    val id = if (password.isEmpty()) "public" else password.hashCode().toString(16)
+}
+
 fun Application.configurePlugin() {
     install(WebSockets)
 
-    val sessions = ConcurrentHashMap<String, WebSocketSession>()
-    val players = ConcurrentHashMap<String, PlayerPosition>()
+    val rooms = ConcurrentHashMap<String, Room>()
     val json = Json { ignoreUnknownKeys = true }
-    val roomPassword = RoomPassword()
+
+    fun getOrCreateRoom(password: String): Room {
+        val key = password.ifEmpty { "" }
+        return rooms.getOrPut(key) { Room(password) }
+    }
+
+    fun totalPlayers() = rooms.values.sumOf { it.players.size }
+    fun roomList() = rooms.values.joinToString(", ") { "${it.id}(${it.players.size})" }
 
     routing {
         get("/") {
-            call.respondText("KSP Multiplayer Server - ${players.size} players connected")
+            call.respondText("KrispyMPL Server — ${totalPlayers()} players in ${rooms.size} rooms: ${roomList()}")
         }
 
         webSocket("/ws") {
             var playerName = "Unknown"
+            var currentRoom: Room? = null
 
             try {
                 for (frame in incoming) {
@@ -48,31 +61,32 @@ fun Application.configurePlugin() {
 
                         when (msg.type) {
                             "join" -> {
-                                if (roomPassword.value.isNotEmpty() && msg.password != roomPassword.value) {
+                                val room = getOrCreateRoom(msg.password)
+                                currentRoom = room
+
+                                if (room.password.isNotEmpty() && msg.password != room.password) {
                                     send(Frame.Text(json.encodeToString(ServerMessage("auth_error", name = "Wrong password"))))
-                                    log.info("Player rejected (wrong password): ${msg.name}")
+                                    log.info("Player rejected (room ${room.id}, wrong password): ${msg.name}")
                                     close()
                                     return@webSocket
                                 }
-                                if (players.isEmpty() && msg.password.isNotEmpty()) {
-                                    roomPassword.value = msg.password
-                                    log.info("Room created with password by: ${msg.name}")
-                                }
+
                                 playerName = msg.name
-                                sessions[playerName] = this
-                                players[playerName] = PlayerPosition(playerName, 0.0, 0.0, 0.0, "Kerbin")
-                                broadcast(json, sessions, ServerMessage("joined", players.values.toList()))
-                                log.info("Player joined: $playerName (${players.size} online)")
+                                room.sessions[playerName] = this
+                                room.players[playerName] = PlayerPosition(playerName, 0.0, 0.0, 0.0, "Kerbin")
+                                broadcast(json, room, ServerMessage("joined", room.players.values.toList()))
+                                log.info("Player joined room ${room.id}: $playerName (${room.players.size} in room, ${totalPlayers()} total)")
                             }
 
                             "pos" -> {
+                                val room = currentRoom ?: return@webSocket
                                 val pos = PlayerPosition(playerName, msg.x, msg.y, msg.z, msg.body)
-                                players[playerName] = pos
-                                broadcast(json, sessions, ServerMessage("player_update", listOf(pos)))
+                                room.players[playerName] = pos
+                                broadcast(json, room, ServerMessage("player_update", listOf(pos)))
                             }
 
                             "leave" -> {
-                                doLeave(playerName, sessions, players, json, roomPassword)
+                                currentRoom?.let { doLeave(playerName, it, json) }
                             }
                         }
                     }
@@ -80,30 +94,28 @@ fun Application.configurePlugin() {
             } catch (e: Exception) {
                 log.info("Connection error for $playerName: ${e.message}")
             } finally {
-                doLeave(playerName, sessions, players, json, roomPassword)
+                currentRoom?.let { room ->
+                    doLeave(playerName, room, json)
+                    if (room.players.isEmpty() && room.password.isEmpty()) {
+                        rooms.remove("")
+                    }
+                }
             }
         }
     }
 }
 
-class RoomPassword {
-    @Volatile
-    var value: String = ""
+private suspend fun doLeave(name: String, room: Room, json: Json) {
+    if (name == "Unknown") return
+    room.sessions.remove(name)
+    room.players.remove(name)
+    broadcast(json, room, ServerMessage("player_left", name = name))
+    log.info("Player left room ${room.id}: $name (${room.players.size} in room)")
 }
 
-private suspend fun doLeave(name: String, sessions: ConcurrentHashMap<String, WebSocketSession>, players: ConcurrentHashMap<String, PlayerPosition>, json: Json, roomPassword: RoomPassword) {
-    if (name != "Unknown") {
-        sessions.remove(name)
-        players.remove(name)
-        if (players.isEmpty()) roomPassword.value = ""
-        broadcast(json, sessions, ServerMessage("player_left", name = name))
-        log.info("Player left: $name (${players.size} online)")
-    }
-}
-
-private suspend fun broadcast(json: Json, sessions: ConcurrentHashMap<String, WebSocketSession>, msg: ServerMessage) {
+private suspend fun broadcast(json: Json, room: Room, msg: ServerMessage) {
     val text = json.encodeToString(msg)
-    sessions.values.forEach { session ->
+    room.sessions.values.forEach { session ->
         try {
             session.send(Frame.Text(text))
         } catch (_: Exception) {}
