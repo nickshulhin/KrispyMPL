@@ -3,4 +3,4 @@ ktor:
     port: 8080
   application:
     modules:
-      - com.krispympl.PluginKt.configurePlugin
+      - com.nickshulhin.PluginKt.configurePlugin

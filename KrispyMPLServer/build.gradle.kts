@@ -3,7 +3,7 @@ plugins {
     alias(ktorLibs.plugins.ktor)
 }
 
-group = "com.krispympl"
+group = "com.nickshulhin"
 version = "1.0.0-SNAPSHOT"
 
 application {
