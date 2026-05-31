@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace KrispyMPL
 {
-    [KSPAddon(KSPAddon.Startup.Instantly, true)]
+    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class KerbalMultiplayerPlugin : MonoBehaviour
     {
         private const float UPDATE_INTERVAL = 0.5f;
@@ -43,25 +43,8 @@ namespace KrispyMPL
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
             GameEvents.onGUIApplicationLauncherReady.Add(RegisterToolbarButton);
             GameEvents.onGUIApplicationLauncherDestroyed.Add(OnLauncherDestroyed);
-        }
-
-        public void Start()
-        {
-            StartCoroutine(TryRegisterSoon());
-        }
-
-        private System.Collections.IEnumerator TryRegisterSoon()
-        {
-            yield return new WaitForSeconds(2f);
-            for (int i = 0; i < 60; i++)
-            {
-                if (ApplicationLauncher.Instance != null)
-                {
-                    RegisterToolbarButton();
-                    yield break;
-                }
-                yield return new WaitForSeconds(0.5f);
-            }
+            if (ApplicationLauncher.Instance != null)
+                RegisterToolbarButton();
         }
 
         public void OnDestroy()
