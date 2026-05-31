@@ -1,7 +1,6 @@
 build/
-.gradle/
 .idea/
+.git/
 *.iml
 Dockerfile
 .dockerignore
-.git/

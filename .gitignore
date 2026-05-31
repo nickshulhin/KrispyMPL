@@ -17,7 +17,7 @@ Thumbs.db
 
 # Gradle
 *.jar
-!gradle/wrapper/gradle-wrapper.jar
+!**/gradle-wrapper.jar
 
 # KSP plugin output
 KrispyMPL/bin/
