@@ -19,6 +19,10 @@
       <HintPath>$(KSPManagedDir)/Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(KSPManagedDir)/Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>$(KSPManagedDir)/UnityEngine.dll</HintPath>
       <Private>false</Private>

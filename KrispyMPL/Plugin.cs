@@ -41,9 +41,22 @@ namespace KrispyMPL
         {
             DontDestroyOnLoad(this);
             Debug.Log("[KrispyMPL] Awake");
-            _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
+            if (string.IsNullOrEmpty(_playerName) || _playerName.StartsWith("Player_"))
+                _playerName = GetSteamName();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
+        }
+
+        private static string GetSteamName()
+        {
+            try
+            {
+                var name = Steamworks.SteamFriends.GetPersonaName();
+                if (!string.IsNullOrEmpty(name))
+                    return name;
+            }
+            catch { }
+            return "Player_" + UnityEngine.Random.Range(1000, 9999);
         }
 
         public void OnDestroy()
