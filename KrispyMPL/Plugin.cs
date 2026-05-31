@@ -45,6 +45,25 @@ namespace KrispyMPL
             GameEvents.onGUIApplicationLauncherDestroyed.Add(OnLauncherDestroyed);
         }
 
+        public void Start()
+        {
+            StartCoroutine(TryRegisterSoon());
+        }
+
+        private System.Collections.IEnumerator TryRegisterSoon()
+        {
+            yield return new WaitForSeconds(2f);
+            for (int i = 0; i < 60; i++)
+            {
+                if (ApplicationLauncher.Instance != null)
+                {
+                    RegisterToolbarButton();
+                    yield break;
+                }
+                yield return new WaitForSeconds(0.5f);
+            }
+        }
+
         public void OnDestroy()
         {
             GameEvents.onGUIApplicationLauncherDestroyed.Remove(OnLauncherDestroyed);
