@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace KrispyMPL
 {
-    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
+    [KSPAddon(KSPAddon.Startup.EveryScene, true)]
     public class KerbalMultiplayerPlugin : MonoBehaviour
     {
         private const float UPDATE_INTERVAL = 0.5f;
