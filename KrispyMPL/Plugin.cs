@@ -41,18 +41,26 @@ namespace KrispyMPL
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
+            GameEvents.onGUIApplicationLauncherReady.Add(RegisterToolbarButton);
+            GameEvents.onGUIApplicationLauncherDestroyed.Add(OnLauncherDestroyed);
         }
 
         public void OnDestroy()
         {
+            GameEvents.onGUIApplicationLauncherDestroyed.Remove(OnLauncherDestroyed);
+            GameEvents.onGUIApplicationLauncherReady.Remove(RegisterToolbarButton);
             GameEvents.onGameSceneLoadRequested.Remove(OnSceneChange);
             RemoveToolbarButton();
             Disconnect();
         }
 
-        private void OnSceneChange(GameScenes scene)
+        private void OnLauncherDestroyed()
         {
             _appButton = null;
+        }
+
+        private void OnSceneChange(GameScenes scene)
+        {
             _showConfig = false;
             if (scene == GameScenes.MAINMENU || scene == GameScenes.SETTINGS || scene == GameScenes.CREDITS)
                 Disconnect();
@@ -61,7 +69,6 @@ namespace KrispyMPL
         private void RegisterToolbarButton()
         {
             if (ApplicationLauncher.Instance == null) return;
-            if (!WindowVisible()) return;
             if (_appButton != null) return;
             var tex = MakeIconTexture();
             _appButton = ApplicationLauncher.Instance.AddModApplication(
