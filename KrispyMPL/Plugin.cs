@@ -64,19 +64,26 @@ namespace KrispyMPL
 
         private void OnSceneChange(GameScenes scene)
         {
-            _appButton = null;
             if (scene == GameScenes.MAINMENU || scene == GameScenes.SETTINGS || scene == GameScenes.CREDITS)
+            {
+                _showConfig = false;
                 Disconnect();
+            }
         }
 
         private void RegisterToolbarButton()
         {
             if (ApplicationLauncher.Instance == null) return;
-            if (_appButton != null) return;
+            if (!WindowVisible()) return;
+            if (_appButton != null)
+            {
+                ApplicationLauncher.Instance.RemoveModApplication(_appButton);
+                _appButton = null;
+            }
             var tex = MakeIconTexture();
             _appButton = ApplicationLauncher.Instance.AddModApplication(
-                () => { _showConfig = true; },
-                () => { _showConfig = false; },
+                () => _showConfig = true,
+                () => _showConfig = false,
                 null, null, null, null,
                 ApplicationLauncher.AppScenes.SPACECENTER |
                 ApplicationLauncher.AppScenes.FLIGHT |
