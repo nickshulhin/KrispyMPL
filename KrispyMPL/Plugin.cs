@@ -188,7 +188,6 @@ namespace KrispyMPL
 
         public void OnGUI()
         {
-            if (!WindowVisible()) return;
             GUI.skin = HighLogic.Skin;
 
             if (!_showConfig)
@@ -205,10 +204,12 @@ namespace KrispyMPL
                     if (GUI.Button(btnRect, "MPL"))
                         _showConfig = true;
                 }
-                return;
             }
 
-            _windowRect = GUILayout.Window(424242, _windowRect, DrawWindow, "Krispy Multiplayer");
+            if (_showConfig)
+            {
+                _windowRect = GUILayout.Window(424242, _windowRect, DrawWindow, "Krispy Multiplayer");
+            }
         }
 
         private void DrawWindow(int windowId)
