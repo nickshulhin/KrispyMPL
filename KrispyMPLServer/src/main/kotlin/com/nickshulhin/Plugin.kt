@@ -23,7 +23,6 @@ data class ClientMessage(val type: String, val name: String = "", val password: 
 data class ServerMessage(val type: String, val players: List<PlayerPosition> = emptyList(), val name: String = "")
 
 private val log = LoggerFactory.getLogger("KrispyMPLServer")
-private val serverPassword = System.getenv("KMPL_PASSWORD") ?: ""
 
 fun Application.configurePlugin() {
     install(WebSockets)
@@ -31,6 +30,7 @@ fun Application.configurePlugin() {
     val sessions = ConcurrentHashMap<String, WebSocketSession>()
     val players = ConcurrentHashMap<String, PlayerPosition>()
     val json = Json { ignoreUnknownKeys = true }
+    val roomPassword = RoomPassword()
 
     routing {
         get("/") {
@@ -48,11 +48,15 @@ fun Application.configurePlugin() {
 
                         when (msg.type) {
                             "join" -> {
-                                if (serverPassword.isNotEmpty() && msg.password != serverPassword) {
+                                if (roomPassword.value.isNotEmpty() && msg.password != roomPassword.value) {
                                     send(Frame.Text(json.encodeToString(ServerMessage("auth_error", name = "Wrong password"))))
                                     log.info("Player rejected (wrong password): ${msg.name}")
                                     close()
                                     return@webSocket
+                                }
+                                if (players.isEmpty() && msg.password.isNotEmpty()) {
+                                    roomPassword.value = msg.password
+                                    log.info("Room created with password by: ${msg.name}")
                                 }
                                 playerName = msg.name
                                 sessions[playerName] = this
@@ -68,7 +72,7 @@ fun Application.configurePlugin() {
                             }
 
                             "leave" -> {
-                                doLeave(playerName, sessions, players, json)
+                                doLeave(playerName, sessions, players, json, roomPassword)
                             }
                         }
                     }
@@ -76,16 +80,22 @@ fun Application.configurePlugin() {
             } catch (e: Exception) {
                 log.info("Connection error for $playerName: ${e.message}")
             } finally {
-                doLeave(playerName, sessions, players, json)
+                doLeave(playerName, sessions, players, json, roomPassword)
             }
         }
     }
 }
 
-private suspend fun doLeave(name: String, sessions: ConcurrentHashMap<String, WebSocketSession>, players: ConcurrentHashMap<String, PlayerPosition>, json: Json) {
+class RoomPassword {
+    @Volatile
+    var value: String = ""
+}
+
+private suspend fun doLeave(name: String, sessions: ConcurrentHashMap<String, WebSocketSession>, players: ConcurrentHashMap<String, PlayerPosition>, json: Json, roomPassword: RoomPassword) {
     if (name != "Unknown") {
         sessions.remove(name)
         players.remove(name)
+        if (players.isEmpty()) roomPassword.value = ""
         broadcast(json, sessions, ServerMessage("player_left", name = name))
         log.info("Player left: $name (${players.size} online)")
     }

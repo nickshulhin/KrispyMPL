@@ -245,15 +245,22 @@ namespace KrispyMPL
 
             GUILayout.Label($"Online: {_remotePlayers.Count}");
 
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button(_connected ? "Disconnect" : "Connect"))
+            if (!_connected)
             {
-                if (_connected) Disconnect();
-                else ConnectToServer();
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Join Room"))
+                    ConnectToServer();
+                if (GUILayout.Button("Create Room"))
+                    ConnectToServer();
+                GUILayout.EndHorizontal();
+            }
+            else
+            {
+                if (GUILayout.Button("Disconnect"))
+                    Disconnect();
             }
             if (GUILayout.Button("Close"))
                 _showConfig = false;
-            GUILayout.EndHorizontal();
 
             foreach (var kvp in _remotePlayers)
             {
