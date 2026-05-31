@@ -1,7 +1,7 @@
 {
     "NAME": "KrispyMPL",
     "URL": "https://raw.githubusercontent.com/nickshulhin/KrispyMPL/main/GameData/KrispyMPL/KrispyMPL.version",
-    "DOWNLOAD": "https://github.com/nickshulhin/KrispyMPL/releases",
+    "DOWNLOAD": "https://github.com/nickshulhin/KrispyMPL/releases/tag/alpha",
     "GITHUB": {
         "USERNAME": "nickshulhin",
         "REPOSITORY": "KrispyMPL"

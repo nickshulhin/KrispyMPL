@@ -9,7 +9,7 @@
     "ksp_version_max": "1.12.99",
     "license": "MIT",
     "resources": {
-        "homepage": "https://github.com/nickshulhin/KrispyMPL",
+        "homepage": "https://github.com/nickshulhin/KrispyMPL/releases/tag/alpha",
         "repository": "https://github.com/nickshulhin/KrispyMPL",
         "bugtracker": "https://github.com/nickshulhin/KrispyMPL/issues",
         "remote-avc": "https://raw.githubusercontent.com/nickshulhin/KrispyMPL/main/GameData/KrispyMPL/KrispyMPL.version"
@@ -27,7 +27,7 @@
             "install_to": "GameData"
         }
     ],
-    "download": "https://github.com/nickshulhin/KrispyMPL/releases/download/v0.1.0/KrispyMPL.zip",
+    "download": "https://github.com/nickshulhin/KrispyMPL/releases/download/alpha/KrispyMPL-0.1.0.0.zip",
     "download_size": 50000,
     "download_hash": {
         "sha1": "0000000000000000000000000000000000000000",
