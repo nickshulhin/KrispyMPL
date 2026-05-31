@@ -43,10 +43,12 @@ namespace KrispyMPL
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
             GameEvents.onGUIApplicationLauncherReady.Add(RegisterToolbarButton);
             GameEvents.onGUIApplicationLauncherDestroyed.Add(RemoveToolbarButton);
+            GameEvents.onLevelWasLoadedGUIReady.Add(OnLevelLoaded);
         }
 
         public void OnDestroy()
         {
+            GameEvents.onLevelWasLoadedGUIReady.Remove(OnLevelLoaded);
             GameEvents.onGUIApplicationLauncherDestroyed.Remove(RemoveToolbarButton);
             GameEvents.onGUIApplicationLauncherReady.Remove(RegisterToolbarButton);
             GameEvents.onGameSceneLoadRequested.Remove(OnSceneChange);
@@ -54,9 +56,16 @@ namespace KrispyMPL
             Disconnect();
         }
 
+        private void OnLevelLoaded(GameScenes scene)
+        {
+            if (WindowVisible() && _appButton == null)
+                RegisterToolbarButton();
+        }
+
         private void RegisterToolbarButton()
         {
             if (ApplicationLauncher.Instance == null) return;
+            if (_appButton != null) return;
             var tex = MakeIconTexture();
             _appButton = ApplicationLauncher.Instance.AddModApplication(
                 () => { _showConfig = true; },
