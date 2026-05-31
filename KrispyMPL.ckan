@@ -1,0 +1,39 @@
+{
+    "spec_version": "v1.34",
+    "identifier": "KrispyMPL",
+    "name": "KrispyMPL",
+    "abstract": "A lightweight multiplayer plugin for Kerbal Space Program. See other players' vessel positions in real-time.",
+    "author": "nickshulhin",
+    "version": "0.1.0",
+    "ksp_version_min": "1.12.0",
+    "ksp_version_max": "1.12.99",
+    "license": "MIT",
+    "resources": {
+        "homepage": "https://github.com/nickshulhin/KrispyMPL",
+        "repository": "https://github.com/nickshulhin/KrispyMPL",
+        "bugtracker": "https://github.com/nickshulhin/KrispyMPL/issues",
+        "remote-avc": "https://raw.githubusercontent.com/nickshulhin/KrispyMPL/main/GameData/KrispyMPL/KrispyMPL.version"
+    },
+    "tags": [
+        "plugin",
+        "multiplayer"
+    ],
+    "localizations": [
+        "en-us"
+    ],
+    "install": [
+        {
+            "find": "GameData/KrispyMPL",
+            "install_to": "GameData"
+        }
+    ],
+    "download": "https://github.com/nickshulhin/KrispyMPL/releases/download/v0.1.0/KrispyMPL.zip",
+    "download_size": 50000,
+    "download_hash": {
+        "sha1": "0000000000000000000000000000000000000000",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "download_content_type": "application/zip",
+    "release_date": "2026-05-31T00:00:00Z",
+    "x_generated_by": "netkan"
+}

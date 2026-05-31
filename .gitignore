@@ -20,5 +20,9 @@ Thumbs.db
 !gradle/wrapper/gradle-wrapper.jar
 
 # KSP plugin output
-KerbalMultiplayer/bin/
-KerbalMultiplayer/obj/
+KrispyMPL/bin/
+KrispyMPL/obj/
+
+# Release packaging
+GameData/KrispyMPL/*.dll
+GameData/KrispyMPL/config.txt
