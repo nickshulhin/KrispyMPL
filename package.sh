@@ -24,7 +24,7 @@ echo "===================================================================="
 # Step 1: Build the plugin
 # ---------------------------------------------------------------------
 echo
-echo "[1/5] Building KSP plugin..."
+echo "[1/6] Building KSP plugin..."
 dotnet build "$SCRIPT_DIR/KrispyMPL/KrispyMPL.csproj" -c Release
 DLL="$SCRIPT_DIR/KrispyMPL/bin/Release/net472/$MOD_NAME.dll"
 if [[ ! -f "$DLL" ]]; then
@@ -35,48 +35,57 @@ fi
 # ---------------------------------------------------------------------
 # Step 2: Assemble release directory
 # ---------------------------------------------------------------------
-echo "[2/5] Assembling release structure..."
+echo "[2/6] Assembling release structure..."
 RELEASE_DIR="$SCRIPT_DIR/release"
 rm -rf "$RELEASE_DIR"
 GAMEDATA_DIR="$RELEASE_DIR/GameData/$MOD_NAME"
 mkdir -p "$GAMEDATA_DIR"
 
-cp "$DLL"                                "$GAMEDATA_DIR/"
-cp "$SCRIPT_DIR/GameData/$MOD_NAME/$MOD_NAME.version" "$GAMEDATA_DIR/"
+cp "$DLL"                                                 "$GAMEDATA_DIR/"
+cp "$SCRIPT_DIR/GameData/$MOD_NAME/$MOD_NAME.version"      "$GAMEDATA_DIR/"
 
 # ---------------------------------------------------------------------
-# Step 3: Create zip
+# Step 3: Create dist directory and zip
 # ---------------------------------------------------------------------
 ZIP_NAME="${MOD_NAME}-${VERSION}.zip"
-ZIP_PATH="$SCRIPT_DIR/$ZIP_NAME"
+DIST_DIR="$SCRIPT_DIR/dist"
+mkdir -p "$DIST_DIR"
+ZIP_PATH="$DIST_DIR/$ZIP_NAME"
 
-echo "[3/5] Creating $ZIP_NAME..."
+echo "[3/6] Creating $DIST_DIR/$ZIP_NAME..."
 rm -f "$ZIP_PATH"
 cd "$RELEASE_DIR"
 zip -q -r "$ZIP_PATH" GameData/
 cd "$SCRIPT_DIR"
 
 # ---------------------------------------------------------------------
-# Step 4: Compute checksums
+# Step 4: Verify zip contents
 # ---------------------------------------------------------------------
-echo "[4/5] Computing checksums..."
+echo "[4/6] Verifying zip contents..."
+echo "  Archive contents:"
+unzip -l "$ZIP_PATH" | tail -n +4 | sed 's/^/    /'
+
+# ---------------------------------------------------------------------
+# Step 5: Compute checksums
+# ---------------------------------------------------------------------
+echo "[5/6] Computing checksums..."
 SHA1=$(sha1sum "$ZIP_PATH" | awk '{print $1}')
 SHA256=$(sha256sum "$ZIP_PATH" | awk '{print $1}')
 SIZE=$(stat --printf="%s" "$ZIP_PATH")
 
 # ---------------------------------------------------------------------
-# Step 5: Print results
+# Step 6: Print results
 # ---------------------------------------------------------------------
 echo
 echo "===================================================================="
-echo "  Release v$VERSION created"
+echo "  Release v$VERSION"
 echo "===================================================================="
-echo "  File:      $ZIP_NAME"
+echo "  Archive:   dist/$ZIP_NAME"
 echo "  Size:      $SIZE bytes"
 echo "  SHA1:      $SHA1"
 echo "  SHA256:    $SHA256"
 echo
-echo "  CKAN snippet:"
+echo "  CKAN metadata:"
 echo "  {"
 echo "    \"version\": \"$VERSION\","
 echo "    \"download\": \"https://github.com/nickshulhin/$MOD_NAME/releases/download/v$VERSION/$ZIP_NAME\","
@@ -88,7 +97,6 @@ echo "    },"
 echo "    \"download_content_type\": \"application/zip\""
 echo "  }"
 echo
-echo "===================================================================="
-echo "  Usage:"
-echo "    gh release create v$VERSION $ZIP_NAME --title \"v$VERSION\""
+echo "  GitHub release:"
+echo "    gh release create v$VERSION dist/$ZIP_NAME --title \"v$VERSION\""
 echo "===================================================================="

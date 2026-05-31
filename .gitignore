@@ -27,3 +27,4 @@ KrispyMPL/obj/
 GameData/KrispyMPL/*.dll
 GameData/KrispyMPL/config.txt
 release/
+dist/
