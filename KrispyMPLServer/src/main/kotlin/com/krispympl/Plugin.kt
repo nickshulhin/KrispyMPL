@@ -1,4 +1,4 @@
-package com.nickshulhin
+package com.krispympl
 
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -22,7 +22,7 @@ data class ClientMessage(val type: String, val name: String = "", val x: Double 
 @Serializable
 data class ServerMessage(val type: String, val players: List<PlayerPosition> = emptyList(), val name: String = "")
 
-private val log = LoggerFactory.getLogger("KspServer")
+private val log = LoggerFactory.getLogger("KrispyMPLServer")
 
 fun Application.configurePlugin() {
     install(WebSockets)

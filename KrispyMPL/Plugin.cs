@@ -7,13 +7,13 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
-namespace KerbalMultiplayer
+namespace KrispyMPL
 {
     [KSPAddon(KSPAddon.Startup.SpaceCentre, true)]
     public class KerbalMultiplayerPlugin : MonoBehaviour
     {
         private const float UPDATE_INTERVAL = 0.5f;
-        private const string CONFIG_PATH = "GameData/KerbalMultiplayer/config.txt";
+        private const string CONFIG_PATH = "GameData/KrispyMPL/config.txt";
 
         private Rect _windowRect = new Rect(20, 20, 320, 200);
         private MultiplayerClient _client;
@@ -34,7 +34,7 @@ namespace KerbalMultiplayer
 
         public void Awake()
         {
-            Debug.Log("[KMP] Awake");
+            Debug.Log("[KrispyMPL] Awake");
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
@@ -80,12 +80,12 @@ namespace KerbalMultiplayer
                 _statusMessage = "Connected";
                 _client.Send($"{{\"type\":\"join\",\"name\":\"{_playerName}\"}}");
                 SaveConfig();
-                Debug.Log($"[KMP] Connected to {_serverHost}:{port} as {_playerName}");
+                Debug.Log($"[KrispyMPL] Connected to {_serverHost}:{port} as {_playerName}");
             }
             catch (Exception ex)
             {
                 _statusMessage = $"Error: {ex.Message}";
-                Debug.LogError($"[KMP] Failed to connect: {ex.Message}");
+                Debug.LogError($"[KrispyMPL] Failed to connect: {ex.Message}");
             }
         }
 
@@ -127,7 +127,7 @@ namespace KerbalMultiplayer
                     switch (type)
                     {
                         case "joined":
-                            Debug.Log($"[KMP] Server confirmed join, players: {GetString(dict, "players")?.Length ?? 0}");
+                            Debug.Log($"[KrispyMPL] Server confirmed join, players: {GetString(dict, "players")?.Length ?? 0}");
                             break;
 
                         case "player_update":
@@ -158,14 +158,14 @@ namespace KerbalMultiplayer
                             if (leftName != null && _remotePlayers.ContainsKey(leftName))
                             {
                                 _remotePlayers.Remove(leftName);
-                                Debug.Log($"[KMP] Player left: {leftName}");
+                                Debug.Log($"[KrispyMPL] Player left: {leftName}");
                             }
                             break;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[KMP] Message error: {ex.Message}");
+                    Debug.LogWarning($"[KrispyMPL] Message error: {ex.Message}");
                 }
             }
         }
@@ -249,12 +249,12 @@ namespace KerbalMultiplayer
                             else if (key == "name") _playerName = val;
                         }
                     }
-                    Debug.Log($"[KMP] Loaded config: {_serverHost}:{_serverPort} as {_playerName}");
+                    Debug.Log($"[KrispyMPL] Loaded config: {_serverHost}:{_serverPort} as {_playerName}");
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[KMP] Failed to load config: {ex.Message}");
+                Debug.LogWarning($"[KrispyMPL] Failed to load config: {ex.Message}");
             }
         }
 
@@ -271,7 +271,7 @@ namespace KerbalMultiplayer
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[KMP] Failed to save config: {ex.Message}");
+                Debug.LogWarning($"[KrispyMPL] Failed to save config: {ex.Message}");
             }
         }
 

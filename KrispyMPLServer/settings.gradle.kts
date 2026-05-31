@@ -1,4 +1,4 @@
-rootProject.name = "ksp_server"
+rootProject.name = "KrispyMPLServer"
 
 pluginManagement {
     repositories {
