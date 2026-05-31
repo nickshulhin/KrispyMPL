@@ -42,7 +42,7 @@ namespace KrispyMPL
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
-            _buttonIcon = GameDatabase.Instance.GetTexture("KrispyMPL/assets/nick", false);
+            _buttonIcon = MakeIconTexture();
         }
 
         public void OnDestroy()
@@ -284,6 +284,26 @@ namespace KrispyMPL
         }
 
         #region Config Persistence
+
+        private static Texture2D MakeIconTexture()
+        {
+            var tex = new Texture2D(38, 38, TextureFormat.ARGB32, false);
+            Color green = new Color(0.2f, 0.8f, 0.2f, 1f);
+            Color dark = new Color(0.1f, 0.4f, 0.1f, 1f);
+            for (int y = 0; y < 38; y++)
+            {
+                for (int x = 0; x < 38; x++)
+                {
+                    int cx = x - 19;
+                    int cy = y - 19;
+                    float r = (float)System.Math.Sqrt(cx * cx + cy * cy);
+                    tex.SetPixel(x, y, (r < 18 && r > 13) || (cx > -4 && cx < 4) || (cy > -4 && cy < 4)
+                        ? green : dark);
+                }
+            }
+            tex.Apply();
+            return tex;
+        }
 
         private void LoadConfig()
         {
