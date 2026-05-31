@@ -41,34 +41,32 @@ namespace KrispyMPL
             _playerName = "Player_" + UnityEngine.Random.Range(1000, 9999);
             LoadConfig();
             GameEvents.onGameSceneLoadRequested.Add(OnSceneChange);
-            GameEvents.onLevelWasLoadedGUIReady.Add(OnLevelLoaded);
+            GameEvents.onGUIApplicationLauncherReady.Add(RegisterToolbarButton);
+            GameEvents.onGUIApplicationLauncherDestroyed.Add(OnLauncherDestroyed);
+            if (ApplicationLauncher.Instance != null)
+                RegisterToolbarButton();
         }
 
         public void OnDestroy()
         {
-            GameEvents.onLevelWasLoadedGUIReady.Remove(OnLevelLoaded);
+            GameEvents.onGUIApplicationLauncherDestroyed.Remove(OnLauncherDestroyed);
+            GameEvents.onGUIApplicationLauncherReady.Remove(RegisterToolbarButton);
             GameEvents.onGameSceneLoadRequested.Remove(OnSceneChange);
             RemoveToolbarButton();
             Disconnect();
         }
 
-        private void OnLevelLoaded(GameScenes scene)
+        private void OnLauncherDestroyed()
         {
-            if (!WindowVisible()) return;
-            StartCoroutine(DelayedRegister());
+            _appButton = null;
+            _showConfig = false;
         }
 
-        private System.Collections.IEnumerator DelayedRegister()
+        private void OnSceneChange(GameScenes scene)
         {
-            for (int i = 0; i < 30; i++)
-            {
-                if (ApplicationLauncher.Instance != null)
-                {
-                    RegisterToolbarButton();
-                    yield break;
-                }
-                yield return null;
-            }
+            _appButton = null;
+            if (scene == GameScenes.MAINMENU || scene == GameScenes.SETTINGS || scene == GameScenes.CREDITS)
+                Disconnect();
         }
 
         private void RegisterToolbarButton()
@@ -97,12 +95,6 @@ namespace KrispyMPL
                 _appButton = null;
                 _showConfig = false;
             }
-        }
-
-        private void OnSceneChange(GameScenes scene)
-        {
-            if (scene == GameScenes.MAINMENU || scene == GameScenes.SETTINGS || scene == GameScenes.CREDITS)
-                Disconnect();
         }
 
         private bool WindowVisible()
