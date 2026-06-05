@@ -155,6 +155,27 @@ namespace KrispyMPL
                             _roomId = GetString(dict, "roomId") ?? "";
                             _roomCount = GetInt(dict, "roomCount");
                             Debug.Log($"[KrispyMPL] Joined room {_roomId}, {_roomCount} rooms total");
+
+                            var joinPlayers = GetList(dict, "players");
+                            if (joinPlayers != null)
+                            {
+                                foreach (var p in joinPlayers)
+                                {
+                                    var pd = p as Dictionary<string, object>;
+                                    if (pd == null) continue;
+                                    string jname = GetString(pd, "name");
+                                    if (jname == _playerName) continue;
+
+                                    if (!_remotePlayers.TryGetValue(jname, out var jrp))
+                                    {
+                                        jrp = new RemotePlayer { Name = jname };
+                                        _remotePlayers[jname] = jrp;
+                                    }
+                                    jrp.Position = new Vector3(
+                                        GetFloat(pd, "x"), GetFloat(pd, "y"), GetFloat(pd, "z"));
+                                    jrp.Body = GetString(pd, "body");
+                                }
+                            }
                             break;
 
                         case "player_update":
@@ -643,32 +664,41 @@ namespace KrispyMPL
             }
         }
 
+        private static readonly System.Random _rng = new System.Random();
+
         private static void SendFrame(byte[] data, Stream stream)
         {
+            var maskKey = new byte[4];
+            lock (_rng) { _rng.NextBytes(maskKey); }
+
             byte[] frame;
-            int idx = 0;
+            int hdrLen;
+            int maskOff;
 
             if (data.Length < 126)
             {
-                frame = new byte[2 + data.Length];
+                hdrLen = 2;
+                frame = new byte[hdrLen + 4 + data.Length];
                 frame[0] = 0x81;
-                frame[1] = (byte)data.Length;
-                idx = 2;
+                frame[1] = (byte)(data.Length | 0x80);
+                maskOff = 2;
             }
             else if (data.Length < 65536)
             {
-                frame = new byte[4 + data.Length];
+                hdrLen = 4;
+                frame = new byte[hdrLen + 4 + data.Length];
                 frame[0] = 0x81;
-                frame[1] = 126;
+                frame[1] = 0xFE;
                 frame[2] = (byte)((data.Length >> 8) & 0xFF);
                 frame[3] = (byte)(data.Length & 0xFF);
-                idx = 4;
+                maskOff = 4;
             }
             else
             {
-                frame = new byte[10 + data.Length];
+                hdrLen = 10;
+                frame = new byte[hdrLen + 4 + data.Length];
                 frame[0] = 0x81;
-                frame[1] = 127;
+                frame[1] = 0xFF;
                 long len = data.Length;
                 frame[2] = (byte)((len >> 56) & 0xFF);
                 frame[3] = (byte)((len >> 48) & 0xFF);
@@ -678,10 +708,14 @@ namespace KrispyMPL
                 frame[7] = (byte)((len >> 16) & 0xFF);
                 frame[8] = (byte)((len >> 8) & 0xFF);
                 frame[9] = (byte)(len & 0xFF);
-                idx = 10;
+                maskOff = 10;
             }
 
-            Buffer.BlockCopy(data, 0, frame, idx, data.Length);
+            Buffer.BlockCopy(maskKey, 0, frame, maskOff, 4);
+            int payloadOff = maskOff + 4;
+            for (int i = 0; i < data.Length; i++)
+                frame[payloadOff + i] = (byte)(data[i] ^ maskKey[i & 3]);
+
             stream.Write(frame, 0, frame.Length);
         }
     }
